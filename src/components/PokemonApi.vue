@@ -13,7 +13,7 @@ const showModal = ref(false);
 async function fetchPokemons() {
   try {
     const response = await axios.get(
-      'https://pokeapi.co/api/v2/pokemon?limit=20',
+      'https://pokeapi.co/api/v2/pokemon?limit=50',
     );
     pokemons.value = response.data.results.map((pokemon) => {
       const id = pokemon.url.split('/').filter(Boolean).pop();
@@ -36,12 +36,40 @@ async function openModal(pokemonId) {
       `https://pokeapi.co/api/v2/pokemon/${pokemonId}`,
     );
     selectedPokemon.value = response.data;
+
+    const speciesResponse = await axios.get(selectedPokemon.value.species.url);
+    const evolutionChainUrl = speciesResponse.data.evolution_chain.url;
+    const evolutiveResponse = await axios.get(evolutionChainUrl);
+
+    const chain = evolutiveResponse.data.chain;
+    selectedPokemon.value.evolutions = extractEvolutions(chain);
+
     showModal.value = true;
   } catch (error) {
     console.log('Error fetching pokemon details:', error);
   } finally {
     showModal.value = true;
   }
+}
+
+function extractEvolutions(chain) {
+  const evolutions = [];
+
+  function walkChain(node) {
+    const id = node.species.url.split('/').filter(Boolean).pop();
+    evolutions.push({
+      name: node.species.name,
+      id,
+    });
+
+    if (node.evolves_to.length > 0) {
+      node.evolves_to.forEach((evolution) => {
+        walkChain(evolution);
+      });
+    }
+  }
+  walkChain(chain);
+  return evolutions;
 }
 
 function closeModal() {
@@ -128,6 +156,29 @@ onMounted(() => {
             <span class="stat-value">{{ stat.base_stat }}</span>
           </div>
         </div>
+        <div class="evolutions" v-if="selectedPokemon.evolutions?.length > 1">
+          <h4>Evoluções</h4>
+          <div class="evo-list">
+            <div
+              v-for="evo in selectedPokemon.evolutions"
+              :key="evo.id"
+              class="evo-card"
+              @click="openModal(evo.id)"
+            >
+              <img
+                :src="
+                  useOfficial
+                    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${evo.id}.png`
+                    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evo.id}.png`
+                "
+                :alt="evo.name"
+                width="60"
+              />
+              <p>{{ evo.name }}</p>
+            </div>
+          </div>
+        </div>
+
         <p><strong>Altura:</strong> {{ selectedPokemon.height / 10 }} m</p>
         <p><strong>Peso:</strong> {{ selectedPokemon.weight / 10 }} kg</p>
         <p>
@@ -381,21 +432,26 @@ p[v-if='isLoading'] {
   margin-top: 40px;
 }
 
-/* Responsividade */
-@media (max-width: 600px) {
-  .poke-list {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 15px;
-  }
-
-  .modal {
-    padding: 20px;
-    width: 95%;
-  }
-
-  .stat-name {
-    width: 90px;
-    font-size: 11px;
-  }
+.evolutions {
+  margin-top: 20px;
+}
+.evo-list {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.evo-card {
+  cursor: pointer;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 10px;
+  width: 80px;
+  text-align: center;
+  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+.evo-card:hover {
+  transform: scale(1.05);
 }
 </style>
