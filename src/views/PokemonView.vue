@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref, computed, onBeforeUnmount } from 'vue';
 import axios from 'axios';
+import PokemonCard from '../components/PokemonCard.vue';
 
 const pokemons = ref([]);
 const isLoading = ref(true);
@@ -166,24 +167,18 @@ onBeforeUnmount(() => {
     </div>
 
     <ol v-else class="poke-list">
-      <li
+      <PokemonCard
         v-for="poke in filteredPokemons"
         :key="poke.id"
-        class="poke-card"
+        :id="poke.id"
+        :name="poke.name"
+        :image="
+          useOfficial
+            ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${poke.id}.png`
+            : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png`
+        "
         @click="openModal(poke.id)"
-      >
-        <img
-          :src="
-            useOfficial
-              ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${poke.id}.png`
-              : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.id}.png`
-          "
-          :alt="poke.name"
-          width="80"
-          height="80"
-        />
-        <p>{{ poke.name }}</p>
-      </li>
+      />
     </ol>
 
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">

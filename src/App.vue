@@ -1,9 +1,9 @@
 <script setup>
-import PokemonApi from './components/PokemonApi.vue';
+import PokemonView from './views/PokemonView.vue';
 </script>
 
 <template>
   <div>
-    <PokemonApi />
+    <PokemonView />
   </div>
 </template>
