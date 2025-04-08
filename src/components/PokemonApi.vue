@@ -1,34 +1,81 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, computed, onBeforeUnmount } from 'vue';
 import axios from 'axios';
 
 const pokemons = ref([]);
 const isLoading = ref(true);
 const useOfficial = ref(false);
 const darkMode = ref(false);
+const searchQuery = ref('');
+
+const offset = ref(0);
+const limit = ref(50);
+let loadingMore = false;
 
 const selectedPokemon = ref(null);
 const showModal = ref(false);
 
+// async function fetchPokemons() {
+//   if (loadingMore) return;
+//   loadingMore = true;
+
+//   try {
+//     const response = await axios.get(
+//       `https://pokeapi.co/api/v2/pokemon?offset=${offset.value}&limit=${limit}`,
+//     );
+//     pokemons.value = response.data.results.map((pokemon) => {
+//       const id = pokemon.url.split('/').filter(Boolean).pop();
+
+//       return {
+//         name: pokemon.name,
+//         id,
+//       };
+//     });
+//   } catch (error) {
+//     console.log('Error fetching pokemons:', error);
+//   } finally {
+//     isLoading.value = false;
+//   }
+// }
+
 async function fetchPokemons() {
+  if (loadingMore) return;
+  loadingMore = true;
+  isLoading.value = true;
+
   try {
     const response = await axios.get(
-      'https://pokeapi.co/api/v2/pokemon?limit=50',
+      `https://pokeapi.co/api/v2/pokemon?offset=${offset.value}&limit=${limit.value}`,
     );
-    pokemons.value = response.data.results.map((pokemon) => {
-      const id = pokemon.url.split('/').filter(Boolean).pop();
 
+    const newPokemons = response.data.results.map((poke) => {
+      const id = poke.url.split('/').filter(Boolean).pop();
       return {
-        name: pokemon.name,
+        name: poke.name,
         id,
+        image: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
       };
     });
+
+    pokemons.value.push(...newPokemons);
+    offset.value += limit.value;
   } catch (error) {
-    console.log('Error fetching pokemons:', error);
+    console.error('Erro ao buscar mais pokémons:', error);
   } finally {
+    loadingMore = false;
     isLoading.value = false;
   }
 }
+
+const filteredPokemons = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  if (!query) return pokemons.value;
+
+  return pokemons.value.filter(
+    (poke) =>
+      poke.name.toLowerCase().includes(query) || poke.id.toString() === query,
+  );
+});
 
 async function openModal(pokemonId) {
   try {
@@ -89,8 +136,25 @@ function getStatColor(statName) {
   return colors[statName] || '#9ca3af';
 }
 
+function handleScroll() {
+  const nearBottom =
+    window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
+
+  if (nearBottom) {
+    fetchPokemons();
+  }
+}
+
 onMounted(() => {
-  fetchPokemons();
+  isLoading.value = true;
+  fetchPokemons().finally(() => {
+    isLoading.value = false;
+  });
+  window.addEventListener('scroll', handleScroll);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', handleScroll);
 });
 </script>
 
@@ -101,11 +165,21 @@ onMounted(() => {
       Mudar para: {{ useOfficial ? 'Sprite Padrão' : 'Imagem Oficial' }}
     </button>
 
-    <p v-if="isLoading">Carregando pokemons...</p>
+    <div class="search-bar">
+      <input
+        type="text"
+        v-model="searchQuery"
+        placeholder="Buscar por nome ou ID"
+      />
+    </div>
+
+    <div v-if="loadingMore && !isLoading" class="loading-more">
+      Carregando mais Pokémons...
+    </div>
 
     <ol v-else class="poke-list">
       <li
-        v-for="poke in pokemons"
+        v-for="poke in filteredPokemons"
         :key="poke.id"
         class="poke-card"
         @click="openModal(poke.id)"
@@ -453,5 +527,29 @@ p[v-if='isLoading'] {
 }
 .evo-card:hover {
   transform: scale(1.05);
+}
+
+.search-bar {
+  margin-bottom: 20px;
+  display: grid;
+  gap: 10px;
+  justify-content: center;
+}
+.search-bar input {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  width: 200px;
+}
+.search-bar button {
+  padding: 6px 14px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.search-bar button:hover {
+  background-color: #2563eb;
 }
 </style>
