@@ -7,6 +7,7 @@ const isLoading = ref(true);
 const useOfficial = ref(false);
 const darkMode = ref(false);
 const searchQuery = ref('');
+const showBackToTop = ref(false);
 
 const offset = ref(0);
 const limit = ref(50);
@@ -14,29 +15,6 @@ let loadingMore = false;
 
 const selectedPokemon = ref(null);
 const showModal = ref(false);
-
-// async function fetchPokemons() {
-//   if (loadingMore) return;
-//   loadingMore = true;
-
-//   try {
-//     const response = await axios.get(
-//       `https://pokeapi.co/api/v2/pokemon?offset=${offset.value}&limit=${limit}`,
-//     );
-//     pokemons.value = response.data.results.map((pokemon) => {
-//       const id = pokemon.url.split('/').filter(Boolean).pop();
-
-//       return {
-//         name: pokemon.name,
-//         id,
-//       };
-//     });
-//   } catch (error) {
-//     console.log('Error fetching pokemons:', error);
-//   } finally {
-//     isLoading.value = false;
-//   }
-// }
 
 async function fetchPokemons() {
   if (loadingMore) return;
@@ -145,22 +123,32 @@ function handleScroll() {
   }
 }
 
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function checkScrollPosition() {
+  showBackToTop.value = window.scrollY > 300;
+}
+
 onMounted(() => {
   isLoading.value = true;
   fetchPokemons().finally(() => {
     isLoading.value = false;
   });
   window.addEventListener('scroll', handleScroll);
+  window.addEventListener('scroll', checkScrollPosition);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', handleScroll);
+  window.removeEventListener('scroll', checkScrollPosition);
 });
 </script>
 
 <template>
   <div>
-    <h2>Pokemons API GET</h2>
+    <h2>Pokedex-Vue</h2>
     <button @click="useOfficial = !useOfficial">
       Mudar para: {{ useOfficial ? 'Sprite Padrão' : 'Imagem Oficial' }}
     </button>
@@ -270,6 +258,14 @@ onBeforeUnmount(() => {
         <button class="close-btn" @click="closeModal">Fechar</button>
       </div>
     </div>
+    <button
+      v-if="showBackToTop"
+      @click="scrollToTop"
+      class="back-to-top"
+      title="Voltar ao topo"
+    >
+      ↑
+    </button>
   </div>
 </template>
 
@@ -551,5 +547,26 @@ p[v-if='isLoading'] {
 }
 .search-bar button:hover {
   background-color: #2563eb;
+}
+
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 24px;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: background 0.3s;
+  z-index: 999;
+}
+
+.back-to-top:hover {
+  background: #2563eb;
 }
 </style>
