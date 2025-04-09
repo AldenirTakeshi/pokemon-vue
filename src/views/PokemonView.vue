@@ -260,6 +260,18 @@ onBeforeUnmount(() => {
             <span class="stat-value">{{ stat.base_stat }}</span>
           </div>
         </div>
+        <div v-if="selectedPokemon.game_indices?.length">
+          <h4>Jogos em que aparece:</h4>
+          <div class="game-list">
+            <span
+              v-for="game in selectedPokemon.game_indices"
+              :key="game.version.name"
+              class="game-tag"
+            >
+              {{ game.version.name }}
+            </span>
+          </div>
+        </div>
         <div class="move-carousel">
           <h4>Ataques</h4>
           <div class="carousel-controls">
@@ -608,5 +620,24 @@ p[v-if='isLoading'] {
   font-size: 14px;
   min-width: 100px;
   text-align: center;
+}
+
+.game-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.game-tag {
+  background: #e0e7ff;
+  color: #1e40af;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  font-weight: 600;
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
 }
 </style>
