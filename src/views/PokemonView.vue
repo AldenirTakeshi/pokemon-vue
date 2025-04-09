@@ -72,6 +72,12 @@ async function openModal(pokemonId) {
     const chain = evolutiveResponse.data.chain;
     selectedPokemon.value.evolutions = extractEvolutions(chain);
 
+    const flavorText = speciesResponse.data.flavor_text_entries.find(
+      (entry) => entry.language.name === 'pt' || entry.language.name === 'en',
+    );
+    selectedPokemon.value.description =
+      flavorText?.flavor_text || 'Descrição não encontrada';
+
     showModal.value = true;
   } catch (error) {
     console.log('Error fetching pokemon details:', error);
@@ -216,6 +222,24 @@ onBeforeUnmount(() => {
           :alt="selectedPokemon.name"
           width="150"
         />
+        <p>
+          <strong>Habilidades: </strong>
+          <span
+            v-for="ability in selectedPokemon.abilities"
+            :key="ability.ability.name"
+          >
+            {{ ability.ability.name }}
+            <span
+              v-if="
+                ability !==
+                selectedPokemon.abilities[selectedPokemon.abilities.length - 1]
+              "
+              >,
+            </span>
+          </span>
+        </p>
+        <p><strong>Descrição:</strong> {{ selectedPokemon.description }}</p>
+
         <div class="stats">
           <h4>Status Base</h4>
           <div
