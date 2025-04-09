@@ -9,6 +9,8 @@ const useOfficial = ref(false);
 const darkMode = ref(false);
 const searchQuery = ref('');
 const showBackToTop = ref(false);
+const movePage = ref(0);
+const movePerPage = ref(4);
 
 const offset = ref(0);
 const limit = ref(50);
@@ -132,6 +134,27 @@ function checkScrollPosition() {
   showBackToTop.value = window.scrollY > 300;
 }
 
+const currentMoves = computed(() => {
+  if (!selectedPokemon.value?.moves) return [];
+  const start = movePage.value * movePerPage.value;
+  return selectedPokemon.value.moves.slice(start, start + movePerPage.value);
+});
+
+function nextMovePage() {
+  if (
+    movePage.value <
+    Math.ceil(selectedPokemon.value.moves.length / movePerPage.value) - 1
+  ) {
+    movePage.value++;
+  }
+}
+
+function prevMovePage() {
+  if (movePage.value > 0) {
+    movePage.value--;
+  }
+}
+
 onMounted(() => {
   isLoading.value = true;
   fetchPokemons().finally(() => {
@@ -213,6 +236,23 @@ onBeforeUnmount(() => {
             <span class="stat-value">{{ stat.base_stat }}</span>
           </div>
         </div>
+        <div class="move-carousel">
+          <h4>Ataques</h4>
+          <div class="carousel-controls">
+            <button @click="prevMovePage">◀</button>
+            <div class="moves">
+              <div
+                class="move-card"
+                v-for="move in currentMoves"
+                :key="move.move.name"
+              >
+                {{ move.move.name }}
+              </div>
+            </div>
+            <button @click="nextMovePage">▶</button>
+          </div>
+        </div>
+
         <div class="evolutions" v-if="selectedPokemon.evolutions?.length > 1">
           <h4>Evoluções</h4>
           <div class="evo-list">
@@ -265,7 +305,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Estilos Gerais */
 div {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -277,7 +316,6 @@ h2 {
   font-size: 2rem;
 }
 
-/* Botão de Alternância */
 button {
   background-color: #3b82f6;
   color: white;
@@ -298,7 +336,6 @@ button:hover {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Lista de Pokémons */
 .poke-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -309,39 +346,6 @@ button:hover {
   margin: 0 auto;
 }
 
-.poke-card {
-  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
-  border-radius: 12px;
-  padding: 15px 10px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #e5e7eb;
-}
-
-.poke-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
-}
-
-.poke-card p {
-  margin-top: 10px;
-  font-weight: 600;
-  color: #1f2937;
-  text-transform: capitalize;
-}
-
-.poke-card img {
-  transition: all 0.3s ease;
-}
-
-.poke-card:hover img {
-  transform: scale(1.1);
-}
-
-/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -382,7 +386,6 @@ button:hover {
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
-/* Estatísticas */
 .stats {
   background: #f9fafb;
   border-radius: 12px;
@@ -435,7 +438,6 @@ button:hover {
   color: #1f2937;
 }
 
-/* Tipos e Informações */
 p {
   margin: 8px 0;
   color: #4b5563;
@@ -449,7 +451,6 @@ span {
   text-transform: capitalize;
 }
 
-/* Botão Fechar */
 .close-btn {
   background-color: #ef4444;
   color: white;
@@ -468,7 +469,6 @@ span {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-/* Animações */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -489,7 +489,6 @@ span {
   }
 }
 
-/* Loading */
 p[v-if='isLoading'] {
   text-align: center;
   font-size: 1.2rem;
@@ -563,5 +562,27 @@ p[v-if='isLoading'] {
 
 .back-to-top:hover {
   background: #2563eb;
+}
+
+.move-carousel {
+  margin-top: 20px;
+}
+.carousel-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.moves {
+  display: grid;
+  gap: 10px;
+  overflow-x: auto;
+}
+.move-card {
+  background: #f3f4f6;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  min-width: 100px;
+  text-align: center;
 }
 </style>

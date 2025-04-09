@@ -16,14 +16,14 @@ defineEmits(['click']);
 
 <style scoped>
 .poke-card {
-  background: #f5f5f5;
-  border-radius: 10px;
-  padding: 10px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  border-radius: 12px;
+  padding: 15px 10px;
   text-align: center;
-  width: 100px;
-  box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
 }
 .poke-card img {
   width: 96px;
@@ -34,8 +34,18 @@ defineEmits(['click']);
 }
 
 .poke-card:hover {
-  transform: scale(1.05);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #e5e7eb, #d1d5db);
 }
+
+.poke-card p {
+  margin-top: 10px;
+  font-weight: 600;
+  color: #1f2937;
+  text-transform: capitalize;
+}
+
 .types {
   margin-top: 6px;
 }
