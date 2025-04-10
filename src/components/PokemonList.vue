@@ -13,14 +13,6 @@ function addPokemon() {
   }
 }
 
-// function addPokemon() {
-//   const name = newPokemon.value.trim();
-//   if (name) {
-//     pokemons.value.push(name);
-//     newPokemon.value = '';
-//   }
-// }
-
 function removePokemon(index) {
   pokemons.value.splice(index, 1);
 }

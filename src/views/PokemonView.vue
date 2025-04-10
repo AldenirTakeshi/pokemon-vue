@@ -76,7 +76,8 @@ async function openModal(pokemonId) {
       (entry) => entry.language.name === 'pt' || entry.language.name === 'en',
     );
     selectedPokemon.value.description =
-      flavorText?.flavor_text || 'Descrição não encontrada';
+      flavorText?.flavor_text.replace(/[\n\f]/g, ' ') ||
+      'Descrição não encontrada';
 
     showModal.value = true;
   } catch (error) {
@@ -122,8 +123,34 @@ function getStatColor(statName) {
   };
   return colors[statName] || '#9ca3af';
 }
+function getTypeColor(type) {
+  const colors = {
+    normal: '#A8A77A',
+    fire: '#EE8130',
+    water: '#6390F0',
+    electric: '#F7D02C',
+    grass: '#7AC74C',
+    ice: '#96D9D6',
+    fighting: '#C22E28',
+    poison: '#A33EA1',
+    ground: '#E2BF65',
+    flying: '#A98FF3',
+    psychic: '#F95587',
+    bug: '#A6B91A',
+    rock: '#B6A136',
+    ghost: '#735797',
+    dragon: '#6F35FC',
+    dark: '#705746',
+    steel: '#B7B7CE',
+    fairy: '#D685AD',
+  };
+
+  return colors[type] || '#777';
+}
 
 function handleScroll() {
+  if (loadingMore) return;
+
   const nearBottom =
     window.innerHeight + window.scrollY >= document.body.offsetHeight - 200;
 
@@ -177,8 +204,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div>
+  <div div :class="['app-container', { dark: darkMode }]">
     <h2>Pokedex-Vue</h2>
+    <!-- <button @click="darkMode = !darkMode">
+      {{ darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro' }}
+    </button> -->
+
     <button @click="useOfficial = !useOfficial">
       Mudar para: {{ useOfficial ? 'Sprite Padrão' : 'Imagem Oficial' }}
     </button>
@@ -239,7 +270,29 @@ onBeforeUnmount(() => {
           </span>
         </p>
         <p><strong>Descrição:</strong> {{ selectedPokemon.description }}</p>
-
+        <div class="evolutions" v-if="selectedPokemon.evolutions?.length > 1">
+          <h4>Evoluções</h4>
+          <br />
+          <div class="evo-list">
+            <div
+              v-for="evo in selectedPokemon.evolutions"
+              :key="evo.id"
+              class="evo-card"
+              @click="openModal(evo.id)"
+            >
+              <img
+                :src="
+                  useOfficial
+                    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${evo.id}.png`
+                    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evo.id}.png`
+                "
+                :alt="evo.name"
+                width="60"
+              />
+              <p>{{ evo.name }}</p>
+            </div>
+          </div>
+        </div>
         <div class="stats">
           <h4>Status Base</h4>
           <div
@@ -274,6 +327,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="move-carousel">
           <h4>Ataques</h4>
+          <br />
           <div class="carousel-controls">
             <button @click="prevMovePage">◀</button>
             <div class="moves">
@@ -289,41 +343,22 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div class="evolutions" v-if="selectedPokemon.evolutions?.length > 1">
-          <h4>Evoluções</h4>
-          <div class="evo-list">
-            <div
-              v-for="evo in selectedPokemon.evolutions"
-              :key="evo.id"
-              class="evo-card"
-              @click="openModal(evo.id)"
-            >
-              <img
-                :src="
-                  useOfficial
-                    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${evo.id}.png`
-                    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${evo.id}.png`
-                "
-                :alt="evo.name"
-                width="60"
-              />
-              <p>{{ evo.name }}</p>
-            </div>
-          </div>
-        </div>
-
         <p><strong>Altura:</strong> {{ selectedPokemon.height / 10 }} m</p>
         <p><strong>Peso:</strong> {{ selectedPokemon.weight / 10 }} kg</p>
         <p>
           <strong>Tipos: </strong>
-          <span v-for="t in selectedPokemon.types" :key="t.type.name">
+          <span
+            v-for="t in selectedPokemon.types"
+            :key="t.type.name"
+            :style="{
+              backgroundColor: getTypeColor(t.type.name),
+              padding: '2px 8px',
+              borderRadius: '8px',
+              margin: '0 4px',
+              color: 'white',
+            }"
+          >
             {{ t.type.name }}
-            <span
-              v-if="
-                t !== selectedPokemon.types[selectedPokemon.types.length - 1]
-              "
-              >,
-            </span>
           </span>
         </p>
         <button class="close-btn" @click="closeModal">Fechar</button>
@@ -542,14 +577,21 @@ p[v-if='isLoading'] {
   flex-wrap: wrap;
 }
 .evo-card {
-  cursor: pointer;
-  background: #f3f4f6;
-  border-radius: 10px;
-  padding: 10px;
-  width: 80px;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  border-radius: 12px;
+  padding: 15px 10px;
   text-align: center;
-  box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e5e7eb;
+}
+.evo-card img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
 }
 .evo-card:hover {
   transform: scale(1.05);
@@ -639,5 +681,40 @@ p[v-if='isLoading'] {
   text-transform: uppercase;
   font-weight: 600;
   box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+.dark .poke-card {
+  background: #374151;
+  border-color: #4b5563;
+}
+.dark .poke-card p {
+  color: #f3f4f6;
+}
+
+.dark .modal {
+  background: #111827;
+  color: #f9fafb;
+}
+.dark .close-btn {
+  background-color: #ef4444;
+}
+.dark .close-btn:hover {
+  background-color: #dc2626;
+}
+
+.dark .search-bar input {
+  background: #1e293b;
+  color: white;
+  border: 1px solid #4b5563;
+}
+
+.dark .game-tag {
+  background: #334155;
+  color: #cbd5e1;
 }
 </style>
